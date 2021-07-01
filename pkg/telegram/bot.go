@@ -289,7 +289,13 @@ func (b *Bot) sendWebhook(ctx context.Context, webhooks <-chan alertmanager.Tele
 				continue
 			}
 
-			_, err = b.telegram.Send(chat, b.truncateMessage(out), &telebot.SendOptions{ParseMode: telebot.ModeHTML})
+			sendOpts := telebot.SendOptions{ParseMode: telebot.ModeHTML}
+
+			if value, ok := data.GroupLabels["silent"]; ok && value == "true" {
+				sendOpts.DisableNotification = true
+			}
+
+			_, err = b.telegram.Send(chat, b.truncateMessage(out), &sendOpts)
 			if err != nil {
 				level.Warn(b.logger).Log("msg", "failed to send message with alerts", "err", err)
 				continue
